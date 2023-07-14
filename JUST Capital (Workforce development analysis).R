@@ -2,6 +2,8 @@ install.packages("psych")
 library(tidyverse)
 library(dplyr)
 library(psych)
+library(stats)
+library(forcats)
 
 df <- read_csv("2024 Workforce Development - data-collection.csv")
 
@@ -82,4 +84,69 @@ ggplot(mcap, aes(x = marketcap, fill = factor(restart_program), na.rm = T)) +
   labs(x = "Market Capitalization", y = "Proportion") +
   scale_fill_discrete(name = "Restart program", labels = c("No", "Yes")) +
   theme_minimal()
+
+options(scipen = 999)
+# Graph for apprenticeships
+logit <- glm(apprenticeships ~ factor(industry_name), data = data, family = binomial)
+summary(logit)
+
+app <- data %>% 
+  group_by(industry_name) %>% 
+  count(apprenticeships) %>% 
+  pivot_wider(names_from = apprenticeships, values_from = n) %>% 
+  mutate(percentage = `1`/sum(`0`+`1`)) %>% 
+  filter(!is.na(percentage))
+app
+
+app %>% 
+  ggplot(aes(x = percentage, y = reorder(industry_name, percentage))) +
+  geom_point() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x = "Apprenticeships %", y = "Industry")
+
+# Graph for veteran hiring
+vet <- data %>% 
+  group_by(industry_name) %>% 
+  count(veteran_hiring) %>% 
+  pivot_wider(names_from = veteran_hiring, values_from = n) %>% 
+  mutate(percentage = `1`/sum(`0`+`1`)) %>% 
+  filter(!is.na(percentage))
+vet
+
+vet %>% 
+  ggplot(aes(x = percentage, y = reorder(industry_name, percentage))) +
+  geom_point() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x = "Veteran Hiring %", y = "Industry")
+
+# Graph for second chance
+sec <- data %>% 
+  group_by(industry_name) %>% 
+  count(second_chance) %>% 
+  pivot_wider(names_from = second_chance, values_from = n) %>% 
+  mutate(percentage = `1`/sum(`0`+`1`))
+sec <- sec %>% 
+  arrange(is.na(percentage))
+
+sec %>% 
+  ggplot(aes(x = percentage, y = reorder(industry_name, percentage))) +
+  geom_point() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x = "Second Chance %", y = "Industry")
+
+# Graph for restart program
+re <- data %>% 
+  group_by(industry_name) %>% 
+  count(restart_program) %>% 
+  pivot_wider(names_from = restart_program, values_from = n) %>% 
+  mutate(percentage = `1`/sum(`0`+`1`))
+re <- re %>% 
+  arrange(is.na(percentage))
+
+re %>% 
+  ggplot(aes(x = percentage, y = reorder(industry_name, percentage))) +
+  geom_point() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x = "Restart Program %", y = "Industry")
+
 
